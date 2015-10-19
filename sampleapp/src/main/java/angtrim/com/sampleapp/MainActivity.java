@@ -1,10 +1,10 @@
 package angtrim.com.sampleapp;
 
-import android.support.v7.app.AppCompatActivity;
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
-import android.view.Menu;
-import android.view.MenuItem;
-
+import android.support.v7.app.AppCompatActivity;
+import android.view.View;
 import angtrim.com.fivestarslibrary.FiveStarsDialog;
 
 public class MainActivity extends AppCompatActivity {
@@ -13,28 +13,21 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        FiveStarsDialog fiveStarsDialog = new FiveStarsDialog(this,"angelo.gallarello@gmail.com");
-        fiveStarsDialog.setRateText("Your custom text")
-                .setTitle("Your custom title")
-                .setForceMode(true)
-                .show();
-
     }
 
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.menu_main, menu);
-        return true;
+    public void onButtonClick(View v) {
+        Intent wellIntent = new Intent(Intent.ACTION_VIEW);
+        wellIntent.setData(Uri.parse("http://www.google.com"));
+
+        Intent badIntent = new Intent(Intent.ACTION_VIEW);
+        wellIntent.setData(Uri.parse("http://www.google.com"));
+
+        FiveStarsDialog fiveStarsDialog = new FiveStarsDialog(this);
+        fiveStarsDialog.rateText("Your custom text")
+            .title("Your custom title")
+            .wellRatingIntent(wellIntent)
+            .badRatingIntent(badIntent)
+            .show();
     }
 
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        int id = item.getItemId();
-
-        if (id == R.id.action_settings) {
-            return true;
-        }
-
-        return super.onOptionsItemSelected(item);
-    }
 }

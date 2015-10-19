@@ -1,135 +1,98 @@
+/**
+ * Created by angtrim on 12/09/15.
+ *
+ */
 package angtrim.com.fivestarslibrary;
 
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.SharedPreferences;
-import android.net.Uri;
+import android.support.annotation.NonNull;
 import android.support.v7.app.AlertDialog;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.RatingBar;
 import android.widget.TextView;
 
+public class FiveStarsDialog {
+    private final static String DEFAULT_TITLE           = "Rate this app";
+    private final static String DEFAULT_TEXT            = "How much do you love our app?";
+    private static final int WELL_RATING_STARS_VALUE    = 4;
+    private static final int BAD_RATING_STARS_VALUE     = 3;
 
-/**
- * Created by angtrim on 12/09/15.
- *
- */
-public class FiveStarsDialog  implements DialogInterface.OnClickListener{
+    private final Context mContext;
 
-    private final static String DEFAULT_TITLE = "Rate this app";
-    private final static String DEFAULT_TEXT = "How much do you love our app?";
-    private final static String DEFAULT_POSITIVE = "Ok";
+    private String mTitle;
+    private String mRateText;
 
+    private Intent mWellRatingActionIntent;
+    private Intent mBadRatingActionIntent;
 
-    private final static String SP_NUM_OF_ACCESS = "numOfAccess";
-    private static final String SP_DISABLED = "disabled";
-    private static final String TAG = FiveStarsDialog.class.getSimpleName();
-    private final Context context;
-    private boolean isForceMode = false;
-    private String supportEmail;
-    private TextView contentTextView;
-    private RatingBar ratingBar;
-    private String title = null;
-    private String rateText = null;
-    private AlertDialog alertDialog;
-    private View dialogView;
+    private RatingBar mRatingBar;
+    private AlertDialog mAlertDialog;
 
-
-    public FiveStarsDialog(Context context,String supportEmail){
-        this.context = context;
-        this.supportEmail = supportEmail;
+    public FiveStarsDialog(@NonNull Context context){
+        mContext = context;
     }
 
     private void build(){
-        AlertDialog.Builder builder = new AlertDialog.Builder(context);
-        LayoutInflater inflater = LayoutInflater.from(context);
-        dialogView = inflater.inflate(R.layout.stars, null);
-        String titleToAdd = (title == null) ? DEFAULT_TITLE : title;
-        String textToAdd = (rateText == null) ? DEFAULT_TEXT : rateText;
-        contentTextView = (TextView)dialogView.findViewById(R.id.text_content);
-        contentTextView.setText(textToAdd);
-        ratingBar = (RatingBar) dialogView.findViewById(R.id.ratingBar);
-        ratingBar.setOnRatingBarChangeListener(new RatingBar.OnRatingBarChangeListener() {
-            @Override
-            public void onRatingChanged(RatingBar ratingBar, float v, boolean b) {
-                Log.d(TAG, "Rating changed : " + v);
-                if (isForceMode && v >= 4) {
-                    openMarket();
+        AlertDialog.Builder builder = new AlertDialog.Builder(mContext);
+        LayoutInflater inflater = LayoutInflater.from(mContext);
+        View mDialogView = inflater.inflate(R.layout.stars, null);
+
+        String titleToAdd = (mTitle == null) ? DEFAULT_TITLE : mTitle;
+        String textToAdd = (mRateText == null) ? DEFAULT_TEXT : mRateText;
+        TextView mContentTextView = (TextView) mDialogView.findViewById(R.id.text_content);
+        mContentTextView.setText(textToAdd);
+        mRatingBar = (RatingBar) mDialogView.findViewById(R.id.ratingBar);
+
+        mRatingBar.setOnRatingBarChangeListener(new RatingBar.OnRatingBarChangeListener() {
+            @Override public void onRatingChanged(RatingBar ratingBar, float ratingValue, boolean b) {
+                if (ratingValue >= WELL_RATING_STARS_VALUE) {
+                    startWellRatingIntent();
+                } else {
+                    startBadRatingIntent();
                 }
+
+                mAlertDialog.dismiss();
             }
         });
-        alertDialog = builder.setTitle(titleToAdd)
-                .setView(dialogView)
-                .setPositiveButton(DEFAULT_POSITIVE,this)
+
+        mAlertDialog = builder.setTitle(titleToAdd).setView(mDialogView)
                 .create();
     }
 
-
-
-    private void disable() {
-        SharedPreferences shared = context.getSharedPreferences(context.getPackageName(), Context.MODE_PRIVATE);
-        SharedPreferences.Editor editor = shared.edit();
-        editor.putBoolean(SP_DISABLED, true);
-        editor.apply();
+    private void startWellRatingIntent() {
+        if (mBadRatingActionIntent == null) return;
+        mContext.startActivity(mWellRatingActionIntent);
     }
 
-    private void openMarket() {
-        final String appPackageName = context.getPackageName();
-        try {
-            context.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=" + appPackageName)));
-        } catch (android.content.ActivityNotFoundException anfe) {
-            context.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/details?id=" + appPackageName)));
-        }
-    }
-
-    private void sendEmail() {
-        final Intent emailIntent = new Intent(Intent.ACTION_SEND);
-        emailIntent.setType("plain/text");
-        emailIntent.putExtra(Intent.EXTRA_EMAIL, supportEmail);
-        emailIntent.putExtra(Intent.EXTRA_SUBJECT, "App Report ("+context.getPackageName()+")");
-        emailIntent.putExtra(Intent.EXTRA_TEXT, "");
-        context.startActivity(Intent.createChooser(emailIntent, "Send mail..."));
+    private void startBadRatingIntent() {
+        if (mBadRatingActionIntent == null) return;
+        mContext.startActivity(mBadRatingActionIntent);
     }
 
     public void show() {
         build();
-        alertDialog.show();
+        mAlertDialog.show();
     }
 
-    @Override
-    public void onClick(DialogInterface dialogInterface, int i) {
-        if(i == DialogInterface.BUTTON_POSITIVE){
-            if(ratingBar.getRating() <= 3){
-                sendEmail();
-            }else if(!isForceMode){
-                openMarket();
-            }
-            disable();
-        }
-
-        alertDialog.hide();
-    }
-
-    public FiveStarsDialog setTitle(String title) {
-        this.title = title;
+    public FiveStarsDialog title(String title) {
+        this.mTitle = title;
         return this;
     }
 
-    public FiveStarsDialog setSupportEmail(String supportEmail) {
-        this.supportEmail = supportEmail;
+    public FiveStarsDialog rateText(String rateText){
+        this.mRateText = rateText;
         return this;
     }
 
-    public FiveStarsDialog setRateText(String rateText){
-        this.rateText = rateText;
+    public FiveStarsDialog wellRatingIntent(Intent mWellRatingActionIntent) {
+        this.mWellRatingActionIntent = mWellRatingActionIntent;
         return this;
     }
 
-    public FiveStarsDialog setForceMode(boolean isForceMode){
-        this.isForceMode = isForceMode;
+    public FiveStarsDialog badRatingIntent(Intent mBadRatingActionIntent) {
+        this.mBadRatingActionIntent = mBadRatingActionIntent;
         return this;
     }
 }
