@@ -22,14 +22,13 @@ public class FiveStarsDialog  implements DialogInterface.OnClickListener{
     private final static String DEFAULT_TITLE = "Rate this app";
     private final static String DEFAULT_TEXT = "How much do you love our app?";
     private final static String DEFAULT_POSITIVE = "Ok";
-    private final static String DEFAULT_NEGATIVE = "Not Now";
-    private final static String DEFAULT_NEVER = "Never";
+
+
     private final static String SP_NUM_OF_ACCESS = "numOfAccess";
     private static final String SP_DISABLED = "disabled";
     private static final String TAG = FiveStarsDialog.class.getSimpleName();
     private final Context context;
     private boolean isForceMode = false;
-    SharedPreferences sharedPrefs;
     private String supportEmail;
     private TextView contentTextView;
     private RatingBar ratingBar;
@@ -41,7 +40,6 @@ public class FiveStarsDialog  implements DialogInterface.OnClickListener{
 
     public FiveStarsDialog(Context context,String supportEmail){
         this.context = context;
-        sharedPrefs = context.getSharedPreferences(context.getPackageName(),Context.MODE_PRIVATE);
         this.supportEmail = supportEmail;
     }
 
@@ -65,9 +63,7 @@ public class FiveStarsDialog  implements DialogInterface.OnClickListener{
         });
         alertDialog = builder.setTitle(titleToAdd)
                 .setView(dialogView)
-                .setNegativeButton(DEFAULT_NEGATIVE,this)
                 .setPositiveButton(DEFAULT_POSITIVE,this)
-                .setNeutralButton(DEFAULT_NEVER,this)
                 .create();
     }
 
@@ -89,7 +85,6 @@ public class FiveStarsDialog  implements DialogInterface.OnClickListener{
         }
     }
 
-
     private void sendEmail() {
         final Intent emailIntent = new Intent(Intent.ACTION_SEND);
         emailIntent.setType("plain/text");
@@ -99,28 +94,10 @@ public class FiveStarsDialog  implements DialogInterface.OnClickListener{
         context.startActivity(Intent.createChooser(emailIntent, "Send mail..."));
     }
 
-
-
-
-    private void show() {
-        boolean disabled  = sharedPrefs.getBoolean(SP_DISABLED, false);
-        if(!disabled){
-            build();
-            alertDialog.show();
-        }
-    }
-
-    public void showAfter(int numberOfAccess){
+    public void show() {
         build();
-        SharedPreferences.Editor editor = sharedPrefs.edit();
-        int numOfAccess = sharedPrefs.getInt(SP_NUM_OF_ACCESS, 0);
-        editor.putInt(SP_NUM_OF_ACCESS, numOfAccess + 1);
-        editor.apply();
-        if(numOfAccess + 1 >= numberOfAccess){
-            show();
-        }
+        alertDialog.show();
     }
-
 
     @Override
     public void onClick(DialogInterface dialogInterface, int i) {
@@ -132,21 +109,13 @@ public class FiveStarsDialog  implements DialogInterface.OnClickListener{
             }
             disable();
         }
-        if(i == DialogInterface.BUTTON_NEUTRAL){
-            disable();
-        }
-        if(i == DialogInterface.BUTTON_NEGATIVE){
-            SharedPreferences.Editor editor = sharedPrefs.edit();
-            editor.putInt(SP_NUM_OF_ACCESS, 0);
-            editor.apply();
-        }
+
         alertDialog.hide();
     }
 
     public FiveStarsDialog setTitle(String title) {
         this.title = title;
         return this;
-
     }
 
     public FiveStarsDialog setSupportEmail(String supportEmail) {
